@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Events collection (includes leaderboard data)
+    match /events/{eventId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated(); // Simplified - any user can update for now
+    }
+    
+    // Workouts collection
+    match /workouts/{workoutId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    
+    // Workout logs
+    match /workoutLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    
+    // Login history
+    match /loginHistory/{historyId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    
+    // Message board - CRITICAL: This is the collection name your app uses
+    match /messageboard/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      // Allow ALL authenticated users to update (for replies and likes)
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+  }
+}

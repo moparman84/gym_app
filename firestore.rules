@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated(); // All authenticated users can read profiles
+      allow write: if isAuthenticated() && request.auth.uid == userId; // Users can only edit their own profile
+    }
+    
+    // Events collection (includes leaderboard data)
+    match /events/{eventId} {
+      allow read: if isAuthenticated(); // All members can view calendar
+      allow create: if isAdmin(); // Only admins can create events
+      allow update: if isAdmin(); // Only admins can update events (including leaderboards)
+      allow delete: if isAdmin(); // Only admins can delete events
+    }
+    
+    // Workouts collection
+    match /workouts/{workoutId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin(); // Only admins can manage workouts
+    }
+    
+    // Workout logs - users manage their own
+    match /workoutLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Login history
+    match /loginHistory/{historyId} {
+      allow read: if isAdmin(); // Only admins can view login history
+      allow create: if isAuthenticated(); // Anyone can log their login
+    }
+    
+    // Message board - CORRECT COLLECTION NAME: 'messageboard' (one word)
+    match /messageboard/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      // Allow updates for:
+      // 1. Author editing their own post
+      // 2. Admin editing any post
+      // 3. Anyone adding replies (arrayUnion)
+      // 4. Anyone adding/removing likes
+      allow update: if isAuthenticated() && 
+                      (resource.data.authorId == request.auth.uid || 
+                       isAdmin() ||
+                       // Allow adding replies
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replies']) ||
+                       // Allow updating likes
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'likesCount']));
+      allow delete: if isAuthenticated() && 
+                      (resource.data.authorId == request.auth.uid || isAdmin());
+    }
+    
+    // Legacy messages collection (if any old data exists)
+    match /messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && 
+                      (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && 
+                      (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    // Announcements collection
+    match /announcements/{announcementId} {
+      allow read: if true; // Everyone can read announcements (including logged-out users)
+      allow create: if isAdmin(); // Only admins can create announcements
+      allow delete: if isAdmin(); // Only admins can delete announcements
+    }
+  }
+}

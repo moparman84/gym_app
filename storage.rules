@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules
+// Deploy these rules in Firebase Console → Storage → Rules
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Profile Photos
+    match /profile_photos/{userId}_{timestamp}.{extension} {
+      // Anyone can view profile photos
+      allow read: if true;
+      
+      // Only authenticated users can upload their own photo
+      allow write: if request.auth != null 
+                   && request.auth.uid == userId  // Must match user ID
+                   && request.resource.size < 5 * 1024 * 1024  // Max 5MB
+                   && request.resource.contentType.matches('image/.*');  // Images only
+    }
+    
+    // Deny all other access by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

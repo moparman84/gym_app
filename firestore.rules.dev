@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // DEVELOPMENT MODE - All authenticated users can read/write everything
+    // This is SIMPLER and good for testing
+    // Use this if you're having permission issues during development
+    
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
