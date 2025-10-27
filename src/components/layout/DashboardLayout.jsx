@@ -46,7 +46,7 @@ const DashboardLayout = () => {
         />
         <div className={`fixed inset-y-0 left-0 flex w-full max-w-xs flex-col bg-white transition-transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200">
-            <span className="text-2xl font-bold text-primary-600">GymApp</span>
+            <span className="text-2xl font-bold text-primary-600">Alternative Athletics</span>
             <button
               type="button"
               className="text-gray-400 hover:text-gray-600"
@@ -82,7 +82,7 @@ const DashboardLayout = () => {
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
           <div className="flex h-16 items-center px-6 border-b border-gray-200">
-            <span className="text-2xl font-bold text-primary-600">GymApp</span>
+            <span className="text-2xl font-bold text-primary-600">Alternative Athletics</span>
           </div>
           <nav className="flex-1 px-4 py-4 space-y-1">
             {navigation.map((item) => {
@@ -144,7 +144,7 @@ const DashboardLayout = () => {
             <Bars3Icon className="h-6 w-6" />
           </button>
           <div className="flex flex-1 items-center justify-between px-4">
-            <span className="text-xl font-bold text-primary-600">GymApp</span>
+            <span className="text-xl font-bold text-primary-600">Alternative Athletics</span>
             <button
               onClick={handleSignOut}
               className="text-gray-400 hover:text-gray-600"

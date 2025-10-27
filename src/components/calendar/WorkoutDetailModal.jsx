@@ -35,18 +35,21 @@ const WorkoutDetailModal = ({ isOpen, onClose, event, workout, onViewLeaderboard
             </div>
 
             {/* Main Workout */}
-            {workout && (
+            {(workout || event?.mainWorkoutExercises) && (
               <div className="mb-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-3">Main Workout: {workout.name}</h4>
+                <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                  Main Workout: {workout?.name || event?.title}
+                </h4>
                 <div className="space-y-3">
-                  {workout.exercises && workout.exercises.map((exercise, index) => (
+                  {/* Show mainWorkoutExercises if they exist (may have edits), otherwise show workout.exercises */}
+                  {(event?.mainWorkoutExercises || workout?.exercises || []).map((exercise, index) => (
                     <div key={index} className="p-4 bg-white border border-gray-200 rounded-lg">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">{exercise.name}</p>
                           <div className="mt-1 text-sm text-gray-600">
                             {exercise.sets && <span className="mr-4">Sets: {exercise.sets}</span>}
-                            {exercise.reps && <span className="mr-4">Reps: {exercise.reps}</span>}
+                            {exercise.reps && <span className="mr-4">Reps/Distance: {exercise.reps}</span>}
                             {exercise.weight && <span className="mr-4">Weight: {exercise.weight}</span>}
                             {exercise.duration && <span>Duration: {exercise.duration}</span>}
                           </div>
@@ -73,7 +76,7 @@ const WorkoutDetailModal = ({ isOpen, onClose, event, workout, onViewLeaderboard
                         <p className="font-medium text-gray-800">{exercise.name}</p>
                         <p className="text-gray-600">
                           {exercise.sets && `${exercise.sets} sets `}
-                          {exercise.reps && `× ${exercise.reps} reps `}
+                          {exercise.reps && `× ${exercise.reps} `}
                           {exercise.weight && `@ ${exercise.weight} `}
                           {exercise.duration && `for ${exercise.duration}`}
                         </p>
@@ -88,8 +91,42 @@ const WorkoutDetailModal = ({ isOpen, onClose, event, workout, onViewLeaderboard
               </div>
             )}
 
+            {/* Cool Down Exercises */}
+            {event?.coolDownExercises && event.coolDownExercises.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-3">Cool Down & Stretches</h4>
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {event.coolDownExercises.map((exercise, index) => (
+                      <div key={index} className="p-3 bg-white border border-green-300 rounded-lg">
+                        <p className="font-medium text-gray-900 mb-1">{exercise.name}</p>
+                        <p className="text-xs text-green-700 font-medium mb-1">
+                          ⏱️ {exercise.customNote || exercise.duration}
+                          {exercise.customNote && exercise.duration && (
+                            <span className="text-gray-500 ml-1">(default: {exercise.duration})</span>
+                          )}
+                        </p>
+                        {exercise.description && (
+                          <p className="text-xs text-gray-600 mb-2">{exercise.description}</p>
+                        )}
+                        {exercise.targetMuscles && exercise.targetMuscles.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {exercise.targetMuscles.map((muscle, idx) => (
+                              <span key={idx} className="text-xs px-2 py-0.5 bg-green-100 text-green-800 rounded">
+                                {muscle}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* No Workout Message */}
-            {!workout && !event?.lockerWod && (
+            {!workout && !event?.lockerWod && !event?.mainWorkoutExercises && (
               <div className="text-center py-8">
                 <p className="text-gray-500">No workout details available for this event.</p>
               </div>

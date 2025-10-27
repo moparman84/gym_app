@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import useAuthStore from '../store/useAuthStore';
-import { PlusIcon, PencilIcon, TrashIcon, BoltIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, BoltIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import WorkoutModal from '../components/workouts/WorkoutModal';
 import WorkoutDetailModal from '../components/workouts/WorkoutDetailModal';
 import { seedCrossfitWorkouts } from '../utils/seedCrossfitWorkouts';
@@ -16,6 +16,7 @@ const WorkoutsPage = () => {
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const categoryColors = {
     benchmark: 'bg-blue-100 text-blue-800',
@@ -148,6 +149,23 @@ const WorkoutsPage = () => {
     );
   }
 
+  // Calculate filtered workouts for display
+  const filteredWorkouts = workouts
+    .filter(w => categoryFilter === 'all' || w.category === categoryFilter)
+    .filter(w => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      if (w.name?.toLowerCase().includes(query)) return true;
+      if (w.description?.toLowerCase().includes(query)) return true;
+      if (w.exercises?.some(ex => ex.name?.toLowerCase().includes(query))) return true;
+      return false;
+    })
+    .sort((a, b) => {
+      const nameA = a.name?.toLowerCase() || '';
+      const nameB = b.name?.toLowerCase() || '';
+      return nameA.localeCompare(nameB);
+    });
+
   return (
     <div className="py-6 px-4 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center justify-between">
@@ -179,6 +197,38 @@ const WorkoutsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Search Bar */}
+      {workouts.length > 0 && (
+        <div className="mb-4">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search workouts by name, description, or exercise..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <span className="text-sm">Clear</span>
+              </button>
+            )}
+          </div>
+          {(searchQuery || categoryFilter !== 'all') && (
+            <p className="mt-2 text-sm text-gray-600">
+              Showing {filteredWorkouts.length} of {workouts.length} workout{workouts.length !== 1 ? 's' : ''}
+              {searchQuery && ` matching "${searchQuery}"`}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Category Filter */}
       {workouts.length > 0 && (
@@ -232,11 +282,27 @@ const WorkoutsPage = () => {
           <h3 className="mt-2 text-sm font-medium text-gray-900">No workouts</h3>
           <p className="mt-1 text-sm text-gray-500">Get started by creating a new workout.</p>
         </div>
+      ) : filteredWorkouts.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-lg shadow">
+          <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No workouts found</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {searchQuery 
+              ? `No results for "${searchQuery}". Try a different search term.`
+              : 'No workouts match the selected category.'}
+          </p>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
+            >
+              Clear Search
+            </button>
+          )}
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {workouts
-            .filter(w => categoryFilter === 'all' || w.category === categoryFilter)
-            .map((workout) => (
+          {filteredWorkouts.map((workout) => (
             <div
               key={workout.id}
               onClick={() => handleViewWorkout(workout)}
